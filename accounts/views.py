@@ -2,10 +2,11 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
 from accounts.models import User, StockManager, Customer
-from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer, FarmerRegisterSerializer, CustomerRegisterSerializer
+from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer, FarmerRegisterSerializer, CustomerRegisterSerializer, StockManagerRegisterSerializer
 
 
 class RegisterView(APIView):
@@ -54,6 +55,18 @@ class CustomerRegisterView(APIView):
     @extend_schema(request=CustomerRegisterSerializer, responses=CustomerRegisterSerializer)
     def post(self, request):
         serializer = CustomerRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key, 'user': serializer.data}, status=status.HTTP_201_CREATED)
+
+
+class StockManagerRegisterView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @extend_schema(request=StockManagerRegisterSerializer, responses=StockManagerRegisterSerializer)
+    def post(self, request):
+        serializer = StockManagerRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)

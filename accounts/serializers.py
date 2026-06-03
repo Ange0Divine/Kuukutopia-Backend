@@ -56,6 +56,21 @@ class CustomerRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class StockManagerRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'gender', 'phone_number', 'address', 'password']
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User(**validated_data, role=User.STOCK_MANAGER)
+        user.set_password(password)
+        user.save()
+        return user
+
+
 class StockManagerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
