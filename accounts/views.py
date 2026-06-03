@@ -3,18 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from accounts.models import User, StockManager, Customer
-from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer
-
-
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
 from accounts.models import User, StockManager, Customer
-from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer
+from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer, FarmerRegisterSerializer, CustomerRegisterSerializer
 
 
 class RegisterView(APIView):
@@ -50,11 +41,9 @@ class LogoutView(APIView):
 
 
 class FarmerRegisterView(APIView):
-    @extend_schema(request=UserSerializer, responses=UserSerializer)
+    @extend_schema(request=FarmerRegisterSerializer, responses=FarmerRegisterSerializer)
     def post(self, request):
-        data = request.data.copy()
-        data['role'] = User.FARMER
-        serializer = UserSerializer(data=data)
+        serializer = FarmerRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
@@ -62,11 +51,9 @@ class FarmerRegisterView(APIView):
 
 
 class CustomerRegisterView(APIView):
-    @extend_schema(request=UserSerializer, responses=UserSerializer)
+    @extend_schema(request=CustomerRegisterSerializer, responses=CustomerRegisterSerializer)
     def post(self, request):
-        data = request.data.copy()
-        data['role'] = User.CUSTOMER
-        serializer = UserSerializer(data=data)
+        serializer = CustomerRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
