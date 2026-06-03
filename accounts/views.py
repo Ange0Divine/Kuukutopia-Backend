@@ -7,7 +7,18 @@ from accounts.models import User, StockManager, Customer
 from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer
 
 
+from rest_framework import viewsets, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from drf_spectacular.utils import extend_schema
+from accounts.models import User, StockManager, Customer
+from accounts.serializers import UserSerializer, StockManagerSerializer, CustomerSerializer
+
+
 class RegisterView(APIView):
+    @extend_schema(request=UserSerializer, responses=UserSerializer)
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -17,6 +28,10 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    @extend_schema(
+        request={'application/json': {'type': 'object', 'properties': {'username': {'type': 'string'}, 'password': {'type': 'string'}}}},
+        responses={'200': {'type': 'object', 'properties': {'token': {'type': 'string'}}}}
+    )
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -28,12 +43,14 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    @extend_schema(request=None, responses={'200': {'type': 'object', 'properties': {'message': {'type': 'string'}}}})
     def post(self, request):
         request.user.auth_token.delete()
         return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
 
 class FarmerRegisterView(APIView):
+    @extend_schema(request=UserSerializer, responses=UserSerializer)
     def post(self, request):
         data = request.data.copy()
         data['role'] = User.FARMER
@@ -45,6 +62,7 @@ class FarmerRegisterView(APIView):
 
 
 class CustomerRegisterView(APIView):
+    @extend_schema(request=UserSerializer, responses=UserSerializer)
     def post(self, request):
         data = request.data.copy()
         data['role'] = User.CUSTOMER
