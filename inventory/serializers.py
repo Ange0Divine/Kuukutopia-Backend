@@ -5,7 +5,7 @@ from inventory.models import Products, Branch, Inventory
 class ProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
-        fields = ['id', 'name', 'description', 'price', 'quantity', 'category', 'created_at']
+        fields = ['id', 'name', 'description', 'image', 'price', 'quantity', 'category', 'created_at']
 
 
 class BranchSerializer(serializers.ModelSerializer):
