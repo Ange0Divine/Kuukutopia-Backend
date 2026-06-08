@@ -33,7 +33,7 @@ class Branch(models.Model):
 
 class Inventory(models.Model):
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     last_updated = models.DateTimeField(auto_now=True)
 
