@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+import random
 
 # Create your models here.
 
@@ -26,8 +28,6 @@ class User(AbstractUser):
     
 class StockManager(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    
-    # Additional fields specific to stock managers can be added here
 
     def __str__(self):
         return f"Stock Manager: {self.user.username}"
@@ -35,8 +35,22 @@ class StockManager(models.Model):
 class Customer(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     current_location = models.CharField(max_length=255, blank=True, null=True)
-    
-    # Additional fields specific to customers can be added here
 
     def __str__(self):
-        return f"Customer: {self.user.username}"        
+        return f"Customer: {self.user.username}"
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=5)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def is_expired(self):
+        return timezone.now() > self.created_at + timezone.timedelta(minutes=10)
+
+    @staticmethod
+    def generate_token():
+        return str(random.randint(10000, 99999))
+
+    def __str__(self):
+        return f"Reset token for {self.user.username}"

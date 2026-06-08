@@ -1,6 +1,11 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from accounts.views import UserViewSet, StockManagerViewSet, CustomerViewSet, RegisterView, LoginView, LogoutView, FarmerRegisterView, CustomerRegisterView, StockManagerRegisterView
+from accounts.views import (
+    UserViewSet, StockManagerViewSet, CustomerViewSet,
+    RegisterView, LoginView, LogoutView,
+    FarmerRegisterView, CustomerRegisterView, StockManagerRegisterView,
+    ForgotPasswordView, VerifyTokenView, ResetPasswordView
+)
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -15,4 +20,7 @@ urlpatterns = [
     path('register/stock-manager/', StockManagerRegisterView.as_view(), name='stockmanager-register'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
+    path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
+    path('verify-token/', VerifyTokenView.as_view(), name='verify-token'),
+    path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
 ]
