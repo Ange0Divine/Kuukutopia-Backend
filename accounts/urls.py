@@ -4,7 +4,8 @@ from accounts.views import (
     UserViewSet, StockManagerViewSet, CustomerViewSet,
     RegisterView, LoginView, LogoutView,
     FarmerRegisterView, CustomerRegisterView, StockManagerRegisterView,
-    ForgotPasswordView, VerifyTokenView, ResetPasswordView
+    ForgotPasswordView, VerifyTokenView, ResetPasswordView, ChangePasswordView,
+    UpdateProfileView
 )
 
 router = DefaultRouter()
@@ -23,4 +24,6 @@ urlpatterns = [
     path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
     path('verify-token/', VerifyTokenView.as_view(), name='verify-token'),
     path('reset-password/', ResetPasswordView.as_view(), name='reset-password'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('update-profile/', UpdateProfileView.as_view(), name='update-profile'),
 ]

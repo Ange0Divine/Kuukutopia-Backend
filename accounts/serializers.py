@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'gender', 'phone_number', 'address', 'role', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'gender', 'phone_number', 'address', 'role', 'profile_image', 'password']
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -85,6 +85,17 @@ class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['id', 'user', 'current_location']
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError('Passwords do not match.')
+        return data
 
 
 class ForgotPasswordSerializer(serializers.Serializer):

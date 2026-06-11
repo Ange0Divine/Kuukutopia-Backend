@@ -1,7 +1,8 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny, BasePermission
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.conf import settings
@@ -11,8 +12,14 @@ from accounts.models import User, StockManager, Customer, PasswordResetToken
 from accounts.serializers import (
     UserSerializer, StockManagerSerializer, CustomerSerializer,
     FarmerRegisterSerializer, CustomerRegisterSerializer, StockManagerRegisterSerializer,
-    ForgotPasswordSerializer, VerifyTokenSerializer, ResetPasswordSerializer
+    ForgotPasswordSerializer, VerifyTokenSerializer, ResetPasswordSerializer,
+    ChangePasswordSerializer
 )
+
+
+class IsAdmin(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and (request.user.role == 'Admin' or request.user.is_superuser)
 
 
 def get_tokens_for_user(user):
@@ -91,7 +98,7 @@ class CustomerRegisterView(APIView):
 
 
 class StockManagerRegisterView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAdmin]
 
     @extend_schema(request=StockManagerRegisterSerializer, responses=StockManagerRegisterSerializer)
     def post(self, request):
@@ -105,19 +112,60 @@ class StockManagerRegisterView(APIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_permissions(self):
+        if self.action in ['list', 'create', 'destroy']:
+            return [IsAdmin()]
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            return [IsAuthenticated()]
+        return [IsAdmin()]
+
+    def get_object(self):
+        obj = super().get_object()
+        if self.action in ['update', 'partial_update']:
+            if obj != self.request.user and not (self.request.user.role == 'Admin' or self.request.user.is_superuser):
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied('You can only update your own profile.')
+        return obj
 
 
 class StockManagerViewSet(viewsets.ModelViewSet):
     queryset = StockManager.objects.all()
     serializer_class = StockManagerSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAdmin]
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAdmin]
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(request=ChangePasswordSerializer, responses={'200': {'type': 'object', 'properties': {'message': {'type': 'string'}}}})
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        if not user.check_password(serializer.validated_data['current_password']):
+            return Response({'error': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+        return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+
+
+class UpdateProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request):
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class ForgotPasswordView(APIView):
